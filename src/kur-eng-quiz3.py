@@ -29,7 +29,6 @@ us_MAX_regions = 24
 us_MAX_states = 11
 
 # US regions
-us_regions = ["NE", "SE", "NE", "SW"]
 us_regions_questions = [
     "Venison steak: ",
     "Buffalo Meat Jerky: ",
@@ -175,7 +174,6 @@ us_states_answers_lowercase = [
     "california",
     "tennessee",
     "kentucky",
-    "memphis, tennessee",
 ]
 
 us_states_facts = [
@@ -639,7 +637,7 @@ def mode_selection(type):
         check_choice(choice, "New_Zealand")
     elif type == "Canada":
         print("\n")
-        print("New Zealand mode selection")
+        print("Canada mode selection")
         print("1. Fill-in-the-blanks (foods)")
         print("2. Information list")
         print("0. Back to welcome screen")
@@ -765,7 +763,7 @@ def check_choice(choice, type):
             print("\n")
             print(f"Choice: '{choice}' - INVALID SELECTION.")
             input("Press Enter to continue...")
-            mode_selection("us")
+            mode_selection("New_Zealand")
 
     elif type == "Canada":
         if not choice or choice == "":
@@ -786,7 +784,7 @@ def check_choice(choice, type):
             print("\n")
             print(f"Choice: '{choice}' - INVALID SELECTION.")
             input("Press Enter to continue...")
-            mode_selection("us")
+            mode_selection("Canada")
 
     # measurements
     elif type == "measurements":
@@ -1102,6 +1100,8 @@ def information(type):
         print("\nPress enter to continue: ")
         input()
 
+        mode_selection("New_Zealand")
+
     elif type == "Canada":
         print("\n")
         print("///---Canada---///")
@@ -1180,6 +1180,8 @@ def information(type):
         )
         print("\nPress enter to continue: ")
         input()
+
+        mode_selection("Canada")
 
 
 def repeat_wrong_answers(type, mode, wrong_indices):
@@ -1266,26 +1268,27 @@ def fillintheblanks(type, mode):
     answers_wrong_list = []
     answers_correct = 0
     answers_wrong = 0
-    question_num = int(input("How many questions do you want?: "))
+    max_questions = getattr(sys.modules[__name__], f"{type}_MAX_{mode}")
+    question_num = 0
+    while True:
+        try:
+            question_num = int(input("How many questions do you want?: ").strip())
+            break
+        except ValueError:
+            print("Invalid input. Please enter a number.")
 
-    # check if question_num exceeds limit
-    if question_num > getattr(sys.modules[__name__], f"{type}_MAX_{mode}"):
+    if question_num > max_questions:
         print("Maximum question number exceeded! Question number set to maximum.")
-        question_num = getattr(sys.modules[__name__], f"{type}_MAX_{mode}")
+        question_num = max_questions
+    elif question_num < 1:
+        print("Question number must be at least 1. Question number set to 1.")
+        question_num = 1
 
-    i = question_num
+    pool_size = len(getattr(sys.modules[__name__], f"{type}_{mode}_questions"))
+    answer_list = random.sample(range(pool_size), min(question_num, pool_size))
     print("Selected question number: ", question_num)
 
-    while i >= 1:
-        if len(answer_list) < question_num:
-            selected_question = random.randint(0, (question_num - 1))
-            while selected_question in answer_list:
-                selected_question = random.randint(0, (question_num - 1))
-            answer_list.append(selected_question)
-        else:
-            print("All questions already randomized!")
-            break
-
+    for selected_question in answer_list:
         answer = (
             str(
                 input(
@@ -1346,8 +1349,6 @@ def fillintheblanks(type, mode):
             )
             answers_wrong += 1
             answers_wrong_list.append(selected_question)  # Track wrong questions
-
-        i -= 1
 
     print(calculate_percentage(answers_correct, answers_correct + answers_wrong))
     choice = str(input("Repeat wrong answers? Y/N: ")).strip().lower()
